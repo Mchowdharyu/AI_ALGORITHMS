@@ -1,0 +1,94 @@
+import queue
+#This program is to execute Depth first maze shortest path through a maze while hitting multiple goals
+
+# Define a class to represent a maze
+class Maze:
+    def __init__(self, filename):
+        self.grid = []
+        self.start = None
+        self.goals = []
+        with open(filename) as f:
+            lines = f.readlines()
+            for i in range(len(lines)):
+                row = []
+                for j in range(len(lines[i])-1):
+                    if lines[i][j] == '%':
+                        row.append(None)
+                    elif lines[i][j] == 'P':
+                        self.start = (i, j)
+                        row.append('.')
+                    elif lines[i][j] == '.':
+                        self.goals.append((i, j))
+                        row.append('.')
+                    else:
+                        row.append('.')
+                self.grid.append(row)
+
+    def dfs_multiple(self, node_limit=float('inf')):
+        fringe = [((self.start, frozenset(self.goals)), 0)]
+        visited = set()
+        nodes_expanded = 0
+        while fringe and nodes_expanded < node_limit:
+            state, cost = fringe.pop()
+            nodes_expanded += 1
+            if state[1] == frozenset():
+                # Found a path to all goals
+                path = []
+                while state[0] != self.start:
+                    path.append(state[0])
+                    state = state[2]
+                path.reverse()
+                return path, cost, nodes_expanded
+            if state in visited:
+                continue
+            visited.add(state)
+            for successor in self.get_successors(state):
+                fringe.append((successor, cost+1))
+        return None, float('inf'), nodes_expanded
+
+    def get_successors(self, state):
+        successors = []
+        for action in [(0,1), (0,-1), (1,0), (-1,0)]:
+            i = state[0][0] + action[0]
+            j = state[0][1] + action[1]
+            if i < 0 or i >= len(self.grid) or j < 0 or j >= len(self.grid[i]) or self.grid[i][j] is None:
+                continue
+            new_goals = set(state[1])
+            if (i,j) in new_goals:
+                new_goals.remove((i,j))
+            successors.append(((i,j), frozenset(new_goals), state))
+        return successors
+
+
+
+   
+    def manhattan_sum(self, state):
+        pos, goals, cost = state
+        if not goals:
+            return 0
+        return sum([abs(pos[0]-g[0])+abs(pos[1]-g[1]) for g in goals])
+
+
+tiny_maze = Maze('smallMaze.txt')
+small_maze = Maze('mediumMaze.txt')
+tricky_maze = Maze('bigMaze.txt')
+
+print('DEPTH First Search with multiple goals on tiny search:')
+path, cost, nodes_expanded = tiny_maze.dfs_multiple()
+print('Path:', path)
+print('Cost:', cost)
+print('Nodes expanded:', nodes_expanded)
+
+print('DFS with multiple goals on small search:')
+path, cost, nodes_expanded = small_maze.dfs_multiple()
+print('Path:', path)
+print('Cost:', cost)
+print('Nodes expanded:', nodes_expanded)
+
+print('DFS with multiple goals on tricky search:')
+path, cost, nodes_expanded = tricky_maze.dfs_multiple()
+print('Path:', path)
+print('Cost:', cost)
+print('Nodes expanded:', nodes_expanded)
+
+
